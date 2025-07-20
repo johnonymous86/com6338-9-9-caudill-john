@@ -10,57 +10,66 @@ document.addEventListener('DOMContentLoaded', () => {
     weatherForm.addEventListener('submit', async (event) => {
         event.preventDefault(); 
 
-        weatherSection.innerHTML = ''; // Clear previous weather data
+        weatherSection.innerHTML = ''; 
         const userQuery = weatherSearchInput.value.trim();
-        weatherSearchInput.value = ''; // Reset input field
+        weatherSearchInput.value = ''; 
 
         if (!userQuery) {
-            return; // no action for blank call
+            return; 
         }
 
         const weatherURL = "https://api.openweathermap.org/data/2.5/weather";
-        const queryString = `?units=imperial&appid=${API_KEY}&q=${encodeURIComponent(userQuery)}`;
+        const queryString = `?units=imperial&appid=${API_KEY}&q=${(userQuery)}`;
         const fetchURL = weatherURL + queryString;
 
         try {
             const response = await fetch(fetchURL);
             const data = await response.json();
-
+      
             if (response.ok) {
-                const {
-                    name,
-                    sys,
-                    main,
-                    weather,
-                    dt,
-                    coord
-                } = data;
-
-                const cityCountry = `${name}, ${sys.country}`;
-
-                const mapLink = `https://maps.google.com/?q=${coord.lat},${coord.lon}`;
-
-
-                const iconCode = weather[0].icon;
-                const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
-                const description = weather[0].description;
-
-                weatherSection.innerHTML = `
-                    <h2>${cityCountry}</h2>
-                    <a href="${mapLink}" target="_blank">Click to view map</a>
-                    <img src="${iconUrl}" alt="${description}">
-                    <p style="text-transform: capitalize;">${description}</p><br>
-                    <p>Current: ${currentTemp}° F</p>
-                    <p>Feels like: ${feelsLikeTemp}° F</p><br>
-                    <p>Last updated: ${timeString}</p>
-                `;
+              displayWeatherData(data);
             } else {
-                
-                weatherSection.innerHTML = '<h2>Location not found</h2>';
+              displayLocationNotFound();
             }
-        } catch (error) {
+          } catch (error) {
             console.error('Error fetching weather data:', error);
-            weatherSection.innerHTML = '<h2>Error fetching weather data. Please try again later.</h2>';
+            displayLocationNotFound();
+          }
+        });
+      
+        function displayWeatherData(data) {
+          const { name, sys, weather, main, dt, coord } = data;
+      
+          const cityCountry = `${name}, ${sys.country}`;
+          const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${coord.lat},${coord.lon}`;
+          const weatherIconCode = weather[0].icon;
+          const weatherIconURL = `https://openweathermap.org/img/wn/${weatherIconCode}@2x.png`;
+          const weatherDescription = weather[0].description;
+          const currentTemp = main.temp.toFixed(2);
+          const feelsLikeTemp = main.feels_like.toFixed(2);
+          const lastUpdatedTimestamp = dt * 1000; 
+          const date = new Date(lastUpdatedTimestamp);
+          const lastUpdatedTime = date.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+          });
+      
+          weatherSection.innerHTML = `
+            <h2>${cityCountry}</h2>
+            <a href="${googleMapsLink}" target="_blank">Click to view map</a>
+            <img src="${weatherIconURL}" alt="${weatherDescription}">
+            <p style="text-transform: capitalize;">${weatherDescription}</p><br>
+            <p>Current: ${currentTemp}° F</p>
+            <p>Feels like: ${feelsLikeTemp}° F</p><br>
+            <p>Last updated: ${lastUpdatedTime}</p>
+          `;
         }
-    });
-});
+      
+        function displayLocationNotFound() {
+          weatherSection.innerHTML = '<h2>Location not found</h2>';
+        }
+      });       
+
+
+
+      //escape() vs. encodeURIComponent()
